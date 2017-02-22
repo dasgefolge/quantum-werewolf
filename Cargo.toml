@@ -3,6 +3,10 @@ name = "quantum-werewolf"
 version = "0.1.0"
 authors = ["Fenhl <fenhl@fenhl.net>"]
 
+[lib]
+name = "quantum_werewolf"
+path = "src/lib.rs"
+
 [[bin]]
 name = "qww"
 doc = false
@@ -10,3 +14,4 @@ test = false
 bench = false
 
 [dependencies]
+itertools = "*"
