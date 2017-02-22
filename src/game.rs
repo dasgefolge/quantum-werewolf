@@ -2,6 +2,8 @@
 
 use std::collections::HashSet;
 
+use rand::{Rng, thread_rng};
+
 use player::Player;
 
 /// The possible errors returned by `Game::new`.
@@ -16,7 +18,7 @@ pub enum NewGameError {
 /// This represents the state of a game.
 #[derive(Debug)]
 pub struct Game {
-    //TODO
+    players: Vec<Box<Player>>
 }
 
 impl Game {
@@ -34,11 +36,17 @@ impl Game {
                 return Err(NewGameError::NameCollision(p1.name().to_owned()));
             }
         }
-        Ok(Game {})
+        Ok(Game {
+            players: players
+        })
     }
 
     /// Runs the entire game and returns the names of the winners.
-    pub fn run(self) -> HashSet<String> {
+    pub fn run(mut self) -> HashSet<String> {
+        thread_rng().shuffle(&mut self.players);
+        for (i, player) in self.players.iter_mut().enumerate() {
+            player.recv_id(i);
+        }
         unimplemented!() //TODO game loop
     }
 }

@@ -6,6 +6,7 @@
 #![forbid(unused, unused_extern_crates, unused_import_braces)]
 
 #[macro_use] extern crate itertools;
+extern crate rand;
 
 pub mod game;
 pub mod player;

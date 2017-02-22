@@ -15,3 +15,4 @@ bench = false
 
 [dependencies]
 itertools = "*"
+rand = "*"
