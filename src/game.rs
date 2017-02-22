@@ -1,3 +1,5 @@
+//! Core game logic.
+
 use std::collections::HashSet;
 
 use player::Player;

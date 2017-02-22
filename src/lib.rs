@@ -7,7 +7,8 @@
 
 #[macro_use] extern crate itertools;
 
-mod game;
+pub mod game;
 pub mod player;
 
 pub use game::Game;
+pub use player::Player;
