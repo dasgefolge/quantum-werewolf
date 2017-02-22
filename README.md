@@ -1,2 +1,1 @@
-# quantum-werewolf
-A variant of Werewolf (aka Mafia) based on quantum mechanics
+This is a [Rust](https://rust-lang.org/) implementation of [**Quantum Werewolf**](http://puzzle.cisra.com.au/2008/quantumwerewolf.html), a variant of [Werewolf](https://en.wikipedia.org/wiki/Mafia_%28party_game%29) based on [quantum mechanics](https://en.wikipedia.org/wiki/Quantum_mechanics).
