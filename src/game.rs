@@ -15,10 +15,31 @@ pub enum NewGameError {
     NameCollision(String)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Role {
+    Detective,
+    Villager,
+    Werewolf(usize)
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct Universe {
+    roles: Vec<Role>
+}
+
+impl From<Vec<Role>> for Universe {
+    fn from(roles: Vec<Role>) -> Universe {
+        Universe {
+            roles: roles
+        }
+    }
+}
+
 /// This represents the state of a game.
 #[derive(Debug)]
 pub struct Game {
-    players: Vec<Box<Player>>
+    players: Vec<Box<Player>>,
+    multiverse: HashSet<Universe>
 }
 
 impl Game {
@@ -36,8 +57,30 @@ impl Game {
                 return Err(NewGameError::NameCollision(p1.name().to_owned()));
             }
         }
+        let num_ww = players.len() / 3;
+        let roles: Vec<Role> = {
+            let mut result: Vec<Role> = (0..num_ww).map(|i| Role::Werewolf(i)).collect();
+            result.push(Role::Detective);
+            result
+        };
+        let mut permutations = vec![vec![Role::Villager; players.len()]];
+        for role in roles {
+            permutations = permutations.into_iter().flat_map(|perm| {
+                (0..perm.len()).filter_map(|i| {
+                    if perm[i] == Role::Villager {
+                        let mut new_perm = perm.clone();
+                        new_perm[i] = role;
+                        Some(new_perm)
+                    } else {
+                        None
+                    }
+                }).collect::<Vec<_>>()
+            }).collect();
+        }
+        let multiverse = permutations.into_iter().map(Universe::from).collect();
         Ok(Game {
-            players: players
+            players: players,
+            multiverse: multiverse
         })
     }
 
