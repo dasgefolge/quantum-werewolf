@@ -3,4 +3,10 @@ name = "quantum-werewolf"
 version = "0.1.0"
 authors = ["Fenhl <fenhl@fenhl.net>"]
 
+[[bin]]
+name = "qww"
+doc = false
+test = false
+bench = false
+
 [dependencies]
