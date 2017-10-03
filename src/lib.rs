@@ -5,11 +5,11 @@
 #![deny(missing_docs)]
 #![forbid(unused, unused_extern_crates, unused_import_braces)]
 
-#[macro_use] extern crate itertools;
 extern crate rand;
 
 pub mod game;
 pub mod player;
+mod util;
 
 pub use game::Game;
 pub use player::Player;

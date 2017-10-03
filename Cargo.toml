@@ -9,10 +9,10 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "qww"
+path = "src/main.rs"
 doc = false
 test = false
 bench = false
 
 [dependencies]
-itertools = "*"
 rand = "*"
