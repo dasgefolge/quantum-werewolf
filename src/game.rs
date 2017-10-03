@@ -216,8 +216,7 @@ impl Game {
                                 if let Some(&target_id) = self.player_ids.get(&target) {
                                     let investigated_party = if let Some(investigation_universe) = self.multiverse.iter()
                                         .filter(|universe| universe.roles[id] == Role::Detective) // player must be detective,
-                                        .filter(|universe| universe.alive[id]) // detective must be alive,
-                                        .filter(|universe| universe.alive[target_id]) // and target must be alive
+                                        .filter(|universe| universe.alive[id]) // and detective must be alive
                                         .rand(&mut thread_rng())
                                     {
                                         investigation_universe.parties[target_id]
@@ -257,7 +256,7 @@ impl Game {
                                             universe.roles
                                                 .iter()
                                                 .enumerate()
-                                                .any(|(i, role)| if let &Role::Werewolf(cmp_rank) = role {
+                                                .all(|(i, role)| if let &Role::Werewolf(cmp_rank) = role {
                                                     cmp_rank >= werewolf_rank || !universe.alive[i]
                                                 } else {
                                                     true
@@ -331,29 +330,31 @@ impl Game {
             //TODO nominations
             //TODO vote
             let lynch_name = input("town lynch target");
-            let &lynch_id = self.player_ids.get(&lynch_name).expect("failed to get town lynch target");
-            // evening
-            // eliminate impossible gamestates (where the player to be killed by the vote is already dead), then kill voted player
-            self.multiverse = self.multiverse.into_iter()
-                .filter(|universe| universe.alive[lynch_id])
-                .map(|mut universe| {
-                    universe.kill(lynch_id);
-                    universe
-                })
-                .collect();
-            self.collapse_roles();
-            // announce day deaths
-            let alive_at_day_end = self.player_ids
-                .iter()
-                .map(|(_, &id)| id)
-                .filter(|&id| self.multiverse.iter().any(|universe| universe.alive[id]))
-                .collect::<HashSet<_>>();
-            for name in self.player_names() {
-                if let Some(&id) = self.player_ids.get(&name) {
-                    if alive_at_day_start.contains(&id) && !alive_at_day_end.contains(&id) {
-                        if let Some(sample_universe) = self.multiverse.iter().next() {
-                            //TODO send to players
-                            println!("[ ** ] {} died and was {}", name, sample_universe.roles[id]);
+            if lynch_name != "no lynch" {
+                let &lynch_id = self.player_ids.get(&lynch_name).expect("failed to get town lynch target");
+                // evening
+                // eliminate impossible gamestates (where the player to be killed by the vote is already dead), then kill voted player
+                self.multiverse = self.multiverse.into_iter()
+                    .filter(|universe| universe.alive[lynch_id])
+                    .map(|mut universe| {
+                        universe.kill(lynch_id);
+                        universe
+                    })
+                    .collect();
+                self.collapse_roles();
+                // announce day deaths
+                let alive_at_day_end = self.player_ids
+                    .iter()
+                    .map(|(_, &id)| id)
+                    .filter(|&id| self.multiverse.iter().any(|universe| universe.alive[id]))
+                    .collect::<HashSet<_>>();
+                for name in self.player_names() {
+                    if let Some(&id) = self.player_ids.get(&name) {
+                        if alive_at_day_start.contains(&id) && !alive_at_day_end.contains(&id) {
+                            if let Some(sample_universe) = self.multiverse.iter().next() {
+                                //TODO send to players
+                                println!("[ ** ] {} died and was {}", name, sample_universe.roles[id]);
+                            }
                         }
                     }
                 }
