@@ -3,13 +3,16 @@
 
 extern crate quantum_werewolf;
 
+use std::env;
 use std::io::prelude::*;
 use std::io::{stdin, stdout};
+use std::str::FromStr;
 
-use quantum_werewolf::Game;
+use quantum_werewolf::game::{Game, Role};
 use quantum_werewolf::player::{Player, CliPlayer};
 
 fn main() {
+    let args = env::args().collect::<Vec<_>>();
     let mut players: Vec<Box<Player>> = vec![];
     loop {
         print!("[ ?? ] player name [leave blank to finish]: ");
@@ -22,6 +25,12 @@ fn main() {
         }
         players.push(Box::new(CliPlayer::new(name)));
     }
-    let game = Game::new(players).expect("failed to create game");
+    let roles = args.iter().position(|arg| arg == "--roles").map(|pos|
+        args[pos + 1]
+            .split(',')
+            .map(|role_str| Role::from_str(role_str).expect("no such role"))
+            .collect()
+    );
+    let game = Game::new(players, roles).expect("failed to create game");
     println!("[ ** ] The winners are: {:?}", game.run());
 }

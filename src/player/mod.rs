@@ -15,6 +15,11 @@ pub trait Player: fmt::Debug {
     /// Notifies the player that they have received a secret player ID.
     fn recv_id(&self, usize);
 
+    /// Called when the player should heal a player. Should return the name of the player to heal.
+    ///
+    /// Returning the name of a dead player or a name not in the game is treated the same as not healing anyone.
+    fn choose_heal_target(&self) -> Option<String>;
+
     /// Called when the player should investigate another player. Should return the name of the investigated player.
     ///
     /// Returning the name of a dead player, one's own name, or a name not in the game is treated the same as not investigating anyone.

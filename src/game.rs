@@ -2,6 +2,7 @@
 
 use std::{fmt, mem};
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 
 use rand::{Rng, thread_rng};
 
@@ -14,11 +15,13 @@ pub enum NewGameError {
     /// There are less than three players.
     NotEnoughPlayers,
     /// Multiple players have the same name.
-    NameCollision(String)
+    NameCollision(String),
+    /// More roles than there are players have been specified.
+    TooManyRoles
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// The party of a player determines their goal. It is usually derived from the role.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Party {
     /// The player wants to eliminate the village.
     Werewolves,
@@ -35,18 +38,38 @@ impl fmt::Display for Party {
     }
 }
 
+/// A Werewolf player role.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Role {
+pub enum Role {
+    /// A detective, part of the village. Investigates a player each night, learning their party.
     Detective,
+    /// A healer, part of the village. Heals a player each night, making them immortal for the night. May not heal the same player two nights in a row.
+    Healer,
+    /// A regular villager with no special abilities.
     Villager,
+    /// A werewolf. Kills a player each night if no werewolf with a lower rank is alive.
     Werewolf(usize)
 }
 
 impl Role {
     fn default_party(&self) -> Party {
         match *self {
-            Role::Detective | Role::Villager => Party::Village,
+            Role::Detective | Role::Healer | Role::Villager => Party::Village,
             Role::Werewolf(_) => Party::Werewolves
+        }
+    }
+}
+
+impl FromStr for Role {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Role, ()> {
+        match s {
+            "detective" => Ok(Role::Detective),
+            "healer" => Ok(Role::Healer),
+            "villager" => Ok(Role::Villager),
+            "werewolf" => Ok(Role::Werewolf(0)),
+            _ => Err(())
         }
     }
 }
@@ -55,6 +78,7 @@ impl fmt::Display for Role {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Role::Detective => write!(f, "detective"),
+            Role::Healer => write!(f, "healer"),
             Role::Villager => write!(f, "villager"),
             Role::Werewolf(i) => write!(f, "werewolf {}", i)
         }
@@ -65,12 +89,20 @@ impl fmt::Display for Role {
 struct Universe {
     alive: Vec<bool>,
     roles: Vec<Role>,
-    parties: Vec<Party>
+    parties: Vec<Party>,
+    heals: Vec<usize>, // this should be a set, but HashSet isn't hashable
+    kills: Vec<usize> // this should be a set, but HashSet isn't hashable
 }
 
 impl Universe {
-    fn kill(&mut self, player_id: usize) {
-        self.alive[player_id] = false;
+    fn kill(&mut self, player_id: usize, night: bool) {
+        if night {
+            if !self.heals.contains(&player_id) {
+                self.kills.push(player_id);
+            }
+        } else {
+            self.alive[player_id] = false;
+        }
     }
 }
 
@@ -79,7 +111,9 @@ impl From<Vec<Role>> for Universe {
         Universe {
             alive: vec![true; roles.len()],
             parties: roles.iter().map(Role::default_party).collect(),
-            roles: roles
+            roles: roles,
+            heals: Vec::default(),
+            kills: Vec::default()
         }
     }
 }
@@ -93,12 +127,12 @@ pub struct Game {
 }
 
 impl Game {
-    /// Creates a new game from a list of players.
+    /// Creates a new game from a list of players. A set of roles may optionally be given; if omitted, the only roles will be werewolves, villagers, and a detective.
     ///
     /// # Errors
     ///
     /// Will return an error if no game can be created with the given player list. See `NewGameError` for details.
-    pub fn new(players: Vec<Box<Player>>) -> Result<Game, NewGameError> {
+    pub fn new(players: Vec<Box<Player>>, roles: Option<Vec<Role>>) -> Result<Game, NewGameError> {
         // validate player list
         if players.len() < 3 {
             return Err(NewGameError::NotEnoughPlayers);
@@ -118,9 +152,24 @@ impl Game {
             player_ids.insert(name.to_owned(), i);
         }
         // generate multiverse
-        let num_ww = player_map.len() / 3;
-        let roles: Vec<Role> = {
-            let mut result: Vec<Role> = (0..num_ww).map(|i| Role::Werewolf(i)).collect();
+        let roles = if let Some(roles) = roles {
+            if roles.len() > player_map.len() {
+                return Err(NewGameError::TooManyRoles);
+            }
+            roles.into_iter()
+                .filter(|&role| role != Role::Villager)
+                .fold((0, Vec::default()), |(mut num_ww, mut roles), role| {
+                    if let Role::Werewolf(_) = role {
+                        roles.push(Role::Werewolf(num_ww));
+                        num_ww += 1;
+                    } else {
+                        roles.push(role);
+                    }
+                    (num_ww, roles)
+                }).1
+        } else {
+            let num_ww = player_map.len() / 3;
+            let mut result = (0..num_ww).map(|i| Role::Werewolf(i)).collect::<Vec<_>>();
             result.push(Role::Detective);
             result
         };
@@ -183,7 +232,7 @@ impl Game {
         let mut result = self.players.keys()
             .map(ToOwned::to_owned)
             .collect::<Vec<_>>();
-            thread_rng().shuffle(&mut result);
+        thread_rng().shuffle(&mut result);
         result
     }
 
@@ -200,11 +249,43 @@ impl Game {
         // night/day loop
         loop {
             // night
+            self.multiverse = self.multiverse.into_iter()
+                .map(|mut universe| {
+                    universe.heals = Vec::default();
+                    universe.kills = Vec::default();
+                    universe
+                })
+                .collect();
             let alive_at_night_start = self.player_ids
                 .iter()
                 .map(|(_, &id)| id)
                 .filter(|&id| self.multiverse.iter().any(|universe| universe.alive[id]))
                 .collect::<HashSet<_>>();
+            // healer actions
+            for name in self.player_names() {
+                if let Some(player) = self.players.get(&name) {
+                    if let Some(&id) = self.player_ids.get(&name) {
+                        if self.multiverse.iter().any(|universe| universe.alive[id]) {
+                            if let Some(target) = player.choose_heal_target() {
+                                if let Some(&target_id) = self.player_ids.get(&target) {
+                                    // heal target in all gamestates where player is healer
+                                    self.multiverse = self.multiverse.into_iter()
+                                        .map(|mut universe| {
+                                            let can_heal = universe.roles[id] == Role::Healer &&
+                                            universe.alive[id] &&
+                                            universe.alive[target_id]; //TODO forbid healing the same player 2 nights in a row
+                                            if can_heal {
+                                                universe.heals.push(target_id);
+                                            }
+                                            universe
+                                        })
+                                        .collect();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             // detective investigations
             for name in self.player_names() {
                 let mut exile = false;
@@ -267,7 +348,7 @@ impl Game {
                                         universe.alive[id] &&
                                         universe.alive[target_id];
                                         if can_kill {
-                                            universe.kill(target_id);
+                                            universe.kill(target_id, true);
                                         }
                                         universe
                                     })
@@ -278,6 +359,14 @@ impl Game {
                 }
             }
             // morning
+            self.multiverse = self.multiverse.into_iter()
+                .map(|mut universe| {
+                    for &player_id in &universe.kills {
+                        universe.alive[player_id] = false;
+                    }
+                    universe
+                })
+                .collect();
             self.collapse_roles();
             // announce night deaths
             let alive_at_night_end = self.player_ids
@@ -337,7 +426,7 @@ impl Game {
                 self.multiverse = self.multiverse.into_iter()
                     .filter(|universe| universe.alive[lynch_id])
                     .map(|mut universe| {
-                        universe.kill(lynch_id);
+                        universe.kill(lynch_id, false);
                         universe
                     })
                     .collect();

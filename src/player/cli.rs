@@ -41,6 +41,15 @@ impl Player for CliPlayer {
         self.print_secret(&format!("your secret player ID is {}", player_id)[..]);
     }
 
+    fn choose_heal_target(&self) -> Option<String> {
+        let result = self.input_secret("player to heal");
+        if result == "" {
+            None
+        } else {
+            Some(result)
+        }
+    }
+
     fn choose_investigation_target(&self) -> Option<String> {
         let result = self.input_secret("player to investigate");
         if result == "" {
