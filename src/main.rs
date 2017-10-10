@@ -25,7 +25,7 @@ fn main() {
         }
         players.push(Box::new(CliPlayer::new(name)));
     }
-    let roles = args.iter().position(|arg| arg == "--roles").map(|pos|
+    let roles = args.iter().position(|arg| arg == "--roles").map(|pos| //TODO `--roles=` syntax
         args[pos + 1]
             .split(',')
             .map(|role_str| Role::from_str(role_str).expect("no such role"))

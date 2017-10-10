@@ -199,10 +199,13 @@ impl Game {
         let mut start_size = self.multiverse.len();
         let mut collapsed_roles = HashMap::<usize, Role>::default();
         loop {
-            for name in self.player_names() {
-                if let Some(&id) = self.player_ids.get(&name) {
-                    if self.multiverse.iter().all(|universe| !universe.alive[id]) {
-                        collapsed_roles.insert(id, self.multiverse.iter().rand(&mut thread_rng()).expect(&format!("failed to collapse role for {}", name)).roles[id]);
+            {
+                let collapse_universe = self.multiverse.iter().rand(&mut thread_rng()).expect("paradox created while collapsing roles");
+                for name in self.player_names() {
+                    if let Some(&id) = self.player_ids.get(&name) {
+                        if self.multiverse.iter().all(|universe| !universe.alive[id]) {
+                            collapsed_roles.insert(id, collapse_universe.roles[id]);
+                        }
                     }
                 }
             }
@@ -213,8 +216,6 @@ impl Game {
                 .collect();
             if self.multiverse.len() == start_size {
                 break;
-            } else if self.multiverse.is_empty() {
-                panic!("paradox created while collapsing roles");
             } else {
                 start_size = self.multiverse.len();
             }
