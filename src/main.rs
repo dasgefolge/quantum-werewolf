@@ -1,6 +1,9 @@
 #![warn(trivial_casts)]
-#![forbid(unused, unused_extern_crates, unused_import_braces)]
+#![deny(unused)]
+#![forbid(unused_extern_crates, unused_import_braces)]
 
+extern crate console;
+#[macro_use] extern crate lazy_static;
 extern crate quantum_werewolf;
 
 use std::env;
@@ -8,8 +11,16 @@ use std::io::prelude::*;
 use std::io::{stdin, stdout};
 use std::str::FromStr;
 
+use console::Term;
+
 use quantum_werewolf::game::{Game, Role};
-use quantum_werewolf::player::{Player, CliPlayer};
+use quantum_werewolf::player::Player;
+use quantum_werewolf::player::cli::{Cli, CliPlayer};
+
+lazy_static! {
+    static ref TERM: Term = Term::stdout();
+    static ref CLI: Cli<'static> = Cli::from(TERM);
+}
 
 fn main() {
     let args = env::args().collect::<Vec<_>>();
@@ -23,7 +34,7 @@ fn main() {
         if name.is_empty() {
             break;
         }
-        players.push(Box::new(CliPlayer::new(name)));
+        players.push(Box::new(CliPlayer::new(name, &CLI)));
     }
     let roles = args.iter().position(|arg| arg == "--roles").map(|pos|
         args[pos + 1]

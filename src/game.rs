@@ -147,9 +147,15 @@ impl Game {
         }
         // assign secret player IDs
         let mut player_ids = HashMap::default();
-        for (i, (name, player)) in player_map.iter().enumerate() {
-            player.recv_id(i);
+        for (i, (name, _)) in player_map.iter().enumerate() {
             player_ids.insert(name.to_owned(), i);
+        }
+        {
+            let mut shuffled_ids = player_ids.iter().collect::<Vec<_>>();
+            thread_rng().shuffle(&mut shuffled_ids);
+            for (player_name, &i) in shuffled_ids {
+                player_map.get(player_name).expect("failed to distribute player IDs").recv_id(i);
+            }
         }
         // generate multiverse
         let roles = if let Some(roles) = roles {
@@ -221,11 +227,23 @@ impl Game {
         }
     }
 
-    fn exile(&mut self, name: &str, reason: &str) {
-        if let Some(player) = self.players.remove(name) {
-            player.recv_exile(reason);
-            self.player_ids.remove(name);
+    //fn exile(&mut self, name: &str, reason: &str) {
+    //    if let Some(player) = self.players.remove(name) {
+    //        player.recv_exile(reason);
+    //        self.player_ids.remove(name);
+    //    }
+    //}
+
+    fn maybe_alive(&self, role: Role) -> bool {
+        if self.multiverse.iter().all(|universe| !universe.roles.contains(&role)) {
+            // role is not in the setup in the first place
+            return false;
         }
+        // check not only if the role is dead in all universes, but also if it's the same player with the role (to avoid giving away extra information)
+        !self.player_names().into_iter().any(|name| {
+            let &id = self.player_ids.get(&name).expect("player ID not found");
+            self.multiverse.iter().all(|universe| !universe.alive[id] && universe.roles[id] == role)
+        })
     }
 
     fn player_names(&self) -> Vec<String> {
@@ -262,99 +280,93 @@ impl Game {
                 .filter(|&id| self.multiverse.iter().any(|universe| universe.alive[id]))
                 .collect::<HashSet<_>>();
             // healer actions
-            for name in self.player_names() {
-                if let Some(player) = self.players.get(&name) {
-                    if let Some(&id) = self.player_ids.get(&name) {
-                        if self.multiverse.iter().any(|universe| universe.alive[id]) {
-                            if let Some(target) = player.choose_heal_target() {
-                                if let Some(&target_id) = self.player_ids.get(&target) {
-                                    // heal target in all gamestates where player is healer
-                                    self.multiverse = self.multiverse.into_iter()
-                                        .map(|mut universe| {
-                                            let can_heal = universe.roles[id] == Role::Healer &&
-                                            universe.alive[id] &&
-                                            universe.alive[target_id]; //TODO forbid healing the same player 2 nights in a row
-                                            if can_heal {
-                                                universe.heals.push(target_id);
-                                            }
-                                            universe
-                                        })
-                                        .collect();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            // detective investigations
-            for name in self.player_names() {
-                let mut exile = false;
-                if let Some(player) = self.players.get(&name) {
-                    if let Some(&id) = self.player_ids.get(&name) {
-                        if self.multiverse.iter().any(|universe| universe.alive[id]) {
-                            // investigate player
-                            if let Some(target) = player.choose_investigation_target() {
-                                if let Some(&target_id) = self.player_ids.get(&target) {
-                                    let investigated_party = if let Some(investigation_universe) = self.multiverse.iter()
-                                        .filter(|universe| universe.roles[id] == Role::Detective) // player must be detective,
-                                        .filter(|universe| universe.alive[id]) // and detective must be alive
-                                        .rand(&mut thread_rng())
-                                    {
-                                        investigation_universe.parties[target_id]
-                                    } else {
-                                        continue;
-                                    };
-                                    player.recv_investigation(&target, investigated_party);
-                                    self.multiverse = self.multiverse.into_iter()
-                                        .filter(|universe| !(
-                                            universe.roles[id] == Role::Detective &&
-                                            universe.alive[id] &&
-                                            universe.parties[target_id] != investigated_party
-                                        ))
-                                        .collect();
-                                } else {
-                                    exile = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                if exile {
-                    self.exile(&name, "investigating an illegal target");
-                }
-            }
-            // werewolf kills
-            for name in self.player_names() {
-                if let Some(player) = self.players.get(&name) {
-                    if let Some(&id) = self.player_ids.get(&name) {
-                        if self.multiverse.iter().any(|universe| universe.alive[id]) {
-                            let target = player.choose_werewolf_kill_target();
+            if self.maybe_alive(Role::Healer) {
+                for name in self.player_names() {
+                    let player = self.players.get(&name).expect("player name not found");
+                    let &id = self.player_ids.get(&name).expect("player ID not found");
+                    if self.multiverse.iter().any(|universe| universe.alive[id]) {
+                        if let Some(target) = player.choose_heal_target(self.player_names()) {
                             if let Some(&target_id) = self.player_ids.get(&target) {
-                                // kill target in all gamestates where player is first-ranking werewolf alive
+                                // heal target in all gamestates where player is healer
                                 self.multiverse = self.multiverse.into_iter()
                                     .map(|mut universe| {
-                                        let can_kill = if let Role::Werewolf(werewolf_rank) = universe.roles[id] {
-                                            universe.roles
-                                                .iter()
-                                                .enumerate()
-                                                .all(|(i, role)| if let &Role::Werewolf(cmp_rank) = role {
-                                                    cmp_rank >= werewolf_rank || !universe.alive[i]
-                                                } else {
-                                                    true
-                                                })
-                                        } else {
-                                            false
-                                        } &&
+                                        let can_heal = universe.roles[id] == Role::Healer &&
                                         universe.alive[id] &&
-                                        universe.alive[target_id];
-                                        if can_kill {
-                                            universe.kill(target_id, true);
+                                        universe.alive[target_id]; //TODO forbid healing the same player 2 nights in a row
+                                        if can_heal {
+                                            universe.heals.push(target_id);
                                         }
                                         universe
                                     })
                                     .collect();
                             }
                         }
+                    }
+                }
+            }
+            // detective investigations
+            if self.maybe_alive(Role::Detective) {
+                for name in self.player_names() {
+                    let player = self.players.get(&name).expect("player name not found");
+                    let &id = self.player_ids.get(&name).expect("player ID not found");
+                    if self.multiverse.iter().any(|universe| universe.alive[id]) {
+                        if let Some(target) = player.choose_investigation_target(self.player_names()) {
+                            if let Some(&target_id) = self.player_ids.get(&target) {
+                                // investigate player in all gamestates where player is detective
+                                let investigated_party = if let Some(investigation_universe) = self.multiverse.iter()
+                                    .filter(|universe| universe.roles[id] == Role::Detective) // player must be detective,
+                                    .filter(|universe| universe.alive[id]) // and detective must be alive
+                                    .rand(&mut thread_rng())
+                                {
+                                    investigation_universe.parties[target_id]
+                                } else {
+                                    continue;
+                                };
+                                player.recv_investigation(&target, investigated_party);
+                                self.multiverse = self.multiverse.into_iter()
+                                    .filter(|universe| !(
+                                        universe.roles[id] == Role::Detective &&
+                                        universe.alive[id] &&
+                                        universe.parties[target_id] != investigated_party
+                                    ))
+                                    .collect();
+                            }
+                        }
+                    }
+                }
+            }
+            // werewolf kills
+            for name in self.player_names() {
+                let player = self.players.get(&name).expect("player name not found");
+                let &id = self.player_ids.get(&name).expect("player ID not found");
+                if self.multiverse.iter().any(|universe| universe.alive[id]) {
+                    let target = player.choose_werewolf_kill_target(self.player_names());
+                    if let Some(&target_id) = self.player_ids.get(&target) {
+                        // kill target in all gamestates where player is first-ranking werewolf alive
+                        self.multiverse = self.multiverse.into_iter()
+                            .map(|mut universe| {
+                                let can_kill = if let Role::Werewolf(werewolf_rank) = universe.roles[id] {
+                                    universe.roles
+                                        .iter()
+                                        .enumerate()
+                                        .all(|(i, role)| if let &Role::Werewolf(cmp_rank) = role {
+                                            cmp_rank >= werewolf_rank || !universe.alive[i]
+                                        } else {
+                                            true
+                                        })
+                                } else {
+                                    false
+                                } &&
+                                universe.alive[id] &&
+                                universe.alive[target_id];
+                                if can_kill {
+                                    universe.kill(target_id, true);
+                                }
+                                universe
+                            })
+                            .collect();
+                    } else {
+                        //TODO exile werewolf
                     }
                 }
             }
@@ -375,12 +387,11 @@ impl Game {
                 .filter(|&id| self.multiverse.iter().any(|universe| universe.alive[id]))
                 .collect::<HashSet<_>>();
             for name in self.player_names() {
-                if let Some(&id) = self.player_ids.get(&name) {
-                    if alive_at_night_start.contains(&id) && !alive_at_night_end.contains(&id) {
-                        if let Some(sample_universe) = self.multiverse.iter().next() {
-                            //TODO send to players
-                            println!("[ ** ] {} died and was {}", name, sample_universe.roles[id]);
-                        }
+                let &id = self.player_ids.get(&name).expect("player ID not found");
+                if alive_at_night_start.contains(&id) && !alive_at_night_end.contains(&id) {
+                    if let Some(sample_universe) = self.multiverse.iter().next() {
+                        //TODO send to players
+                        println!("[ ** ] {} died and was {}", name, sample_universe.roles[id]);
                     }
                 }
             }
