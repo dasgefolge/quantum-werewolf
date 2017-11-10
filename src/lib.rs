@@ -2,8 +2,8 @@
 
 #![cfg_attr(test, deny(warnings))]
 #![warn(trivial_casts)]
-#![deny(missing_docs)]
-#![forbid(unused, unused_extern_crates, unused_import_braces)]
+#![deny(missing_docs, unused)]
+#![forbid(unused_extern_crates, unused_import_braces)]
 
 extern crate rand;
 
@@ -11,5 +11,4 @@ pub mod game;
 pub mod player;
 mod util;
 
-pub use game::Game;
 pub use player::Player;
