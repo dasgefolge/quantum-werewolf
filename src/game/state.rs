@@ -165,6 +165,7 @@ impl<P: Eq + Hash> Night<P> {
     W: Fn(&P, Vec<&P>) -> P {
         // reset kill lists
         for universe in self.multiverse.iter_mut() {
+            universe.heals = Vec::default();
             universe.kills = Vec::default();
         }
         // healer actions
