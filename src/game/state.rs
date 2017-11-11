@@ -1,5 +1,6 @@
 //! Game state representation.
 
+use std::fmt;
 use std::collections::HashSet;
 use std::hash::Hash;
 
@@ -84,6 +85,16 @@ pub enum StartGameError {
         required: usize,
         /// But this many roles have been given.
         found: usize
+    }
+}
+
+impl fmt::Display for StartGameError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "failed to start game: ")?;
+        match *self {
+            StartGameError::NotEnoughPlayers { required, found } => write!(f, "not enough players ({} required, {} signed up)", required, found),
+            StartGameError::RolesCount { required, found } => write!(f, "too many roles ({} players, {} roles)", required, found),
+        }
     }
 }
 
