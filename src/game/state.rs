@@ -8,6 +8,9 @@ use rand::{Rng, thread_rng};
 use game::{Multiverse, NightActionResult, Role};
 use util::QwwIteratorExt;
 
+/// The minimum number of players required to start a game.
+pub const MIN_PLAYERS: usize = 3;
+
 /// This enum represents the state of the game. Each variant contains relevant methods to observe or progress the game state, refer to their documentation for details.
 ///
 /// The type parameter `P` is used for player identifiers.
@@ -102,8 +105,8 @@ impl<P: Eq + Hash> Signups<P> {
     /// If fewer roles than players are given, a number of Villagers equal to the difference will be added.
     pub fn start(self, roles: Vec<Role>) -> Result<State<P>, StartGameError> {
         let num_players = self.num_players();
-        if num_players < 3 {
-            return Err(StartGameError::NotEnoughPlayers { required: 3, found: num_players });
+        if num_players < MIN_PLAYERS {
+            return Err(StartGameError::NotEnoughPlayers { required: MIN_PLAYERS, found: num_players });
         }
         if num_players < roles.len() {
             return Err(StartGameError::RolesCount { required: num_players, found: roles.len() });
