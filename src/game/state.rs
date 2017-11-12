@@ -32,10 +32,10 @@ impl<P: Eq + Hash> State<P> {
     pub fn alive(&self) -> Option<HashSet<&P>> {
         match *self {
             State::Signups(_) => None,
-            State::Night(ref night) => Some((night.secret_ids(), night.multiverse.alive())),
-            State::Day(ref day) => Some((day.secret_ids(), day.multiverse.alive())),
+            State::Night(ref night) => Some(night.alive()),
+            State::Day(ref day) => Some(day.alive()),
             State::Complete(_) => None
-        }.map(|(ids, idxs)| idxs.into_iter().map(|idx| &ids[idx]).collect())
+        }
     }
 
     /// Returns the number of players that are in this game
@@ -185,6 +185,46 @@ pub struct Night<P: Eq + Hash> {
 }
 
 impl<P: Eq + Hash> Night<P> {
+    /// Returns `true` if no more night actions can be submitted.
+    pub fn actions_complete(&self, night_actions: &[NightAction<P>]) -> bool {
+        true && // required to make the if blocks parse as expressions for some reason
+        if self.multiverse.role_alive(Role::Healer) {
+            // all healer actions
+            self.multiverse.alive().into_iter().all(|player_idx|
+                night_actions.into_iter().any(|action| if let NightAction::Heal(ref src, _) = *action {
+                    &self.secret_ids[player_idx] == src
+                } else {
+                    false
+                })
+            )
+        } else { true } &&
+        if self.multiverse.role_alive(Role::Detective) {
+            // all detective investigations
+            self.multiverse.alive().into_iter().all(|player_idx|
+                night_actions.into_iter().any(|action| if let NightAction::Investigate(ref src, _) = *action {
+                    &self.secret_ids[player_idx] == src
+                } else {
+                    false
+                })
+            )
+        } else { true } &&
+        // all werewolf kills
+        self.multiverse.alive().into_iter().all(|player_idx|
+            night_actions.into_iter().any(|action| if let NightAction::Kill(ref src, _) = *action {
+                &self.secret_ids[player_idx] == src
+            } else {
+                false
+            })
+        )
+    }
+
+    /// Returns the set of players which are still alive in at least one possible universe.
+    pub fn alive(&self) -> HashSet<&P> {
+        self.multiverse.alive().into_iter()
+            .map(|idx| &self.secret_ids[idx])
+            .collect()
+    }
+
     /// Advance the game state to the next day using natural action resolution.
     ///
     /// Takes night actions submitted by the players and processes them. Any mandatory night actions not submitted will be randomized.
@@ -450,6 +490,13 @@ pub struct Day<P: Eq + Hash> {
 }
 
 impl<P: Eq + Hash> Day<P> {
+    /// Returns the set of players which are still alive in at least one possible universe.
+    pub fn alive(&self) -> HashSet<&P> {
+        self.multiverse.alive().into_iter()
+            .map(|idx| &self.secret_ids[idx])
+            .collect()
+    }
+
     /// Contains results of the last night's night actions.
     pub fn night_action_results(&self) -> Vec<(&P, NightActionResult)> {
         let mut list = Vec::default();
