@@ -161,6 +161,7 @@ impl From<Vec<Role>> for Universe {
 }
 
 /// A collection of universes, with several convenience methods.
+#[derive(Debug)]
 pub struct Multiverse(Vec<Universe>);
 
 impl Multiverse {

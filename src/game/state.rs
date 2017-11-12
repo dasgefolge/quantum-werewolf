@@ -15,6 +15,7 @@ pub const MIN_PLAYERS: usize = 3;
 /// This enum represents the state of the game. Each variant contains relevant methods to observe or progress the game state, refer to their documentation for details.
 ///
 /// The type parameter `P` is used for player identifiers.
+#[derive(Debug)]
 pub enum State<P: Eq + Hash> {
     /// A game which has not been started. The moderator may sign up players, or start the game.
     Signups(Signups<P>),
@@ -77,6 +78,7 @@ impl<P: Eq + Hash> Default for State<P> {
 }
 
 /// A game which has not been started. The moderator may sign up players, or start the game.
+#[derive(Debug)]
 pub struct Signups<P: Eq + Hash> {
     player_names: HashSet<P>
 }
@@ -175,6 +177,7 @@ impl<P: Eq + Hash> From<Signups<P>> for State<P> {
 }
 
 /// A running game which is currently in night time, waiting for the players' night actions.
+#[derive(Debug)]
 pub struct Night<P: Eq + Hash> {
     secret_ids: Vec<P>,
     last_heals: Vec<Option<usize>>,
@@ -438,6 +441,7 @@ impl<P: Eq + Hash> From<Night<P>> for State<P> {
 }
 
 /// A running game which is currently in day time, waiting for the result of the lynch vote.
+#[derive(Debug)]
 pub struct Day<P: Eq + Hash> {
     secret_ids: Vec<P>,
     pub(crate) multiverse: Multiverse,
@@ -518,6 +522,7 @@ impl<P: Eq + Hash> From<Day<P>> for State<P> {
 }
 
 /// A completed game.
+#[derive(Debug)]
 pub struct Complete<P: Eq + Hash> {
     /// The set of players who have won this game.
     pub winners: HashSet<P>
