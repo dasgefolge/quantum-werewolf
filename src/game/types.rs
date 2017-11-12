@@ -47,6 +47,17 @@ impl fmt::Display for Faction {
     }
 }
 
+/// A night action submitted by a player.
+#[derive(Debug)]
+pub enum NightAction<P> {
+    /// A detective investigation.
+    Investigate(P),
+    /// A healer action.
+    Heal(P),
+    /// A werewolf kill.
+    Kill(P)
+}
+
 /// Contains the information sent to a player as the result of a night action.
 #[derive(Debug, Clone, Copy)]
 pub enum NightActionResult {

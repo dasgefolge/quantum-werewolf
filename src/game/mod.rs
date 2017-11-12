@@ -49,7 +49,7 @@ pub fn run_with_roles<P: Eq + Hash + Clone + Player + fmt::Display + From<String
         game_state = match game_state {
             state::State::Signups(_) => unreachable!(),
             state::State::Night(night) => {
-                night.resolve(
+                night.resolve_tar(
                     |p, targets| p.choose_heal_target(targets),
                     |p, targets| p.choose_investigation_target(targets),
                     |p, targets| p.choose_werewolf_kill_target(targets)

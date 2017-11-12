@@ -37,6 +37,18 @@ impl<P: Eq + Hash> State<P> {
         }.map(|(ids, idxs)| idxs.into_iter().map(|idx| &ids[idx]).collect())
     }
 
+    /// Returns the number of players that are in this game
+    ///
+    /// For `Signups`, this is the number of players that have been signed up so far. For `Complete`, it's the number of winners.
+    pub fn num_players(&self) -> usize {
+        match *self {
+            State::Signups(ref signups) => signups.num_players(),
+            State::Night(ref night) => night.secret_ids().len(),
+            State::Day(ref day) => day.secret_ids().len(),
+            State::Complete(Complete { ref winners }) => winners.len()
+        }
+    }
+
     /// Returns the role of the given player, if that role is unambiguous.
     pub fn role(&self, player: &P) -> Option<Role> {
         match *self {
@@ -170,10 +182,29 @@ pub struct Night<P: Eq + Hash> {
 }
 
 impl<P: Eq + Hash> Night<P> {
-    /// Advance the game state to the next day.
+    /*
+    /// Advance the game state to the next day using natural action resolution.
+    ///
+    /// Takes night actions submitted by the players and processes them. Any mandatory night actions not submitted will be randomized.
+    pub fn resolve_nar(mut self, night_actions: Vec<NightAction>) -> State<P> {
+        unimplemented!(); //TODO
+        // check for game-ending conditions
+        if self.multiverse.game_over(false) {
+            return State::Complete(Complete::new(self.secret_ids, self.multiverse));
+        }
+        State::Day(Day {
+            secret_ids: self.secret_ids,
+            multiverse: self.multiverse,
+            night_action_results,
+            last_heals: current_heals
+        })
+    }
+    */
+
+    /// Advance the game state to the next day using temporal action resolution.
     ///
     /// To do this, all night actions have to be submitted. The functions passed as arguments are used to ask for night actions.
-    pub fn resolve<H, I, W>(mut self, choose_heal_target: H, choose_investigation_target: I, choose_werewolf_kill_target: W) -> State<P> where
+    pub fn resolve_tar<H, I, W>(mut self, choose_heal_target: H, choose_investigation_target: I, choose_werewolf_kill_target: W) -> State<P> where
     H: Fn(&P, Vec<&P>) -> Option<P>,
     I: Fn(&P, Vec<&P>) -> Option<P>,
     W: Fn(&P, Vec<&P>) -> P {
