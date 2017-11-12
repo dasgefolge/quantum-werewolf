@@ -48,14 +48,14 @@ impl fmt::Display for Faction {
 }
 
 /// A night action submitted by a player.
-#[derive(Debug)]
-pub enum NightAction<P> {
-    /// A detective investigation.
-    Investigate(P),
+#[derive(Debug, PartialEq, Eq)]
+pub enum NightAction<P: Eq> {
     /// A healer action.
-    Heal(P),
+    Heal(P, P),
+    /// A detective investigation.
+    Investigate(P, P),
     /// A werewolf kill.
-    Kill(P)
+    Kill(P, P)
 }
 
 /// Contains the information sent to a player as the result of a night action.
@@ -128,6 +128,12 @@ impl Universe {
         self.alive.iter().all(|alive| !alive) ||
         (!night && self.alive.iter().filter(|&&alive| alive).count() < 2) ||
         (!night && self.factions.iter().any(|faction| faction.wincon(self)))
+    }
+
+    /// Utility method to properly handle healing a player during the night.
+    pub fn heal(&mut self, player_idx: usize) {
+        self.kills.retain(|&iter_idx| iter_idx != player_idx);
+        self.heals.push(player_idx);
     }
 
     /// Utility method to properly handle killing a player depending on day/night, healed status, etc.

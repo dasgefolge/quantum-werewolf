@@ -6,7 +6,7 @@ use std::hash::Hash;
 
 use rand::{Rng, thread_rng};
 
-use game::{Multiverse, NightActionResult, Role};
+use game::{Multiverse, NightAction, NightActionResult, Role};
 use util::QwwIteratorExt;
 
 /// The minimum number of players required to start a game.
@@ -182,12 +182,74 @@ pub struct Night<P: Eq + Hash> {
 }
 
 impl<P: Eq + Hash> Night<P> {
-    /*
     /// Advance the game state to the next day using natural action resolution.
     ///
     /// Takes night actions submitted by the players and processes them. Any mandatory night actions not submitted will be randomized.
-    pub fn resolve_nar(mut self, night_actions: Vec<NightAction>) -> State<P> {
-        unimplemented!(); //TODO
+    pub fn resolve_nar(mut self, night_actions: &[NightAction<P>]) -> State<P> {
+        // reset kill lists
+        for universe in self.multiverse.iter_mut() {
+            universe.heals = Vec::default();
+            universe.kills = Vec::default();
+        }
+        // resolve night actions
+        let mut current_heals = vec![None; self.secret_ids.len()];
+        let mut night_action_results = vec![None; self.secret_ids.len()];
+        for action in self.sanitized_night_actions(night_actions) { // healer/detective/werewolf setup does not have any dependencies, so resolve in submitted order
+            match action {
+                NightAction::Heal(src_idx, tgt_idx) => {
+                    current_heals[src_idx] = Some(tgt_idx);
+                    for universe in self.multiverse.iter_mut() {
+                        let can_heal = universe.roles[src_idx] == Role::Healer &&
+                        universe.alive[src_idx] &&
+                        universe.alive[tgt_idx];
+                        if can_heal {
+                            universe.heal(tgt_idx);
+                        }
+                    }
+                }
+                NightAction::Investigate(src_idx, tgt_idx) => {
+                    let investigated_faction = if let Some(investigation_universe) = self.multiverse.iter()
+                        .filter(|universe| universe.roles[src_idx] == Role::Detective) // player must be detective,
+                        .filter(|universe| universe.alive[src_idx]) // and detective must be alive
+                        .rand(&mut thread_rng())
+                    {
+                        investigation_universe.factions[tgt_idx]
+                    } else {
+                        continue;
+                    };
+                    if night_action_results[src_idx].is_some() { unimplemented!("multiple night action results for one player"); }
+                    night_action_results[src_idx] = Some(NightActionResult::Investigation(investigated_faction));
+                    self.multiverse = self.multiverse.into_iter()
+                        .filter(|universe| !(
+                            universe.roles[src_idx] == Role::Detective &&
+                            universe.alive[src_idx] &&
+                            universe.factions[tgt_idx] != investigated_faction
+                        ))
+                        .collect();
+                }
+                NightAction::Kill(src_idx, tgt_idx) => {
+                    for universe in self.multiverse.iter_mut() {
+                        let can_kill = if let Role::Werewolf(werewolf_rank) = universe.roles[src_idx] {
+                            universe.roles
+                                .iter()
+                                .enumerate()
+                                .all(|(i, role)| if let &Role::Werewolf(cmp_rank) = role {
+                                    cmp_rank >= werewolf_rank || !universe.alive[i]
+                                } else {
+                                    true
+                                })
+                        } else {
+                            false
+                        } &&
+                        universe.alive[src_idx] &&
+                        universe.alive[tgt_idx];
+                        if can_kill {
+                            universe.kill(tgt_idx, true);
+                        }
+                    }
+                }
+            }
+        }
         // check for game-ending conditions
         if self.multiverse.game_over(false) {
             return State::Complete(Complete::new(self.secret_ids, self.multiverse));
@@ -199,7 +261,6 @@ impl<P: Eq + Hash> Night<P> {
             last_heals: current_heals
         })
     }
-    */
 
     /// Advance the game state to the next day using temporal action resolution.
     ///
@@ -234,7 +295,7 @@ impl<P: Eq + Hash> Night<P> {
                         universe.alive[player_id] &&
                         universe.alive[target_id];
                         if can_heal {
-                            universe.heals.push(target_id);
+                            universe.heal(target_id);
                         }
                     }
                 }
@@ -322,6 +383,46 @@ impl<P: Eq + Hash> Night<P> {
             night_action_results,
             last_heals: current_heals
         })
+    }
+
+    /// Remove illegal actions, add missing compulsory actions.
+    fn sanitized_night_actions(&self, night_actions: &[NightAction<P>]) -> Vec<NightAction<usize>> {
+        let mut result = Vec::default();
+        // remove illegal actions
+        for action in night_actions {
+            match *action {
+                NightAction::Heal(ref src, ref tgt) => {
+                    let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
+                    let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
+                    //TODO check src alive, tgt alive
+                    if self.last_heals[src_idx] != Some(tgt_idx) {
+                        result.push(NightAction::Heal(src_idx, tgt_idx));
+                    }
+                }
+                NightAction::Investigate(ref src, ref tgt) => {
+                    let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
+                    let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
+                    //TODO check src alive
+                    result.push(NightAction::Investigate(src_idx, tgt_idx));
+                }
+                NightAction::Kill(ref src, ref tgt) => {
+                    let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
+                    let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
+                    //TODO check src alive, tgt alive
+                    result.push(NightAction::Kill(src_idx, tgt_idx));
+                }
+            }
+        }
+        // add missing compulsory actions
+        for secret_id in 0..self.secret_ids.len() {
+            // werewolf kill
+            if self.multiverse.alive().contains(&secret_id) && !result.iter().any(|action| if let &NightAction::Kill(src_idx, _) = action { src_idx == secret_id } else { false }) {
+                if let Some(random_id) = self.multiverse.alive().into_iter().rand(&mut thread_rng()) {
+                    result.push(NightAction::Kill(secret_id, random_id));
+                }
+            }
+        }
+        result
     }
 
     /// Returns the player list, sorted by secret player ID.
@@ -444,7 +545,6 @@ impl<P: Eq + Hash> From<Complete<P>> for State<P> {
         State::Complete(state)
     }
 }
-
 /// Iterate over all players in a random order.
 fn shuffled_players<P>(secret_ids: &[P]) -> Vec<(usize, &P)> {
     let mut result = secret_ids.iter().enumerate().collect::<Vec<_>>();
