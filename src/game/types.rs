@@ -49,13 +49,24 @@ impl fmt::Display for Faction {
 
 /// A night action submitted by a player.
 #[derive(Debug, PartialEq, Eq)]
-pub enum NightAction<P: Eq> {
+pub enum NightAction<P> {
     /// A healer action.
     Heal(P, P),
     /// A detective investigation.
     Investigate(P, P),
     /// A werewolf kill.
     Kill(P, P)
+}
+
+impl<P> NightAction<P> {
+    /// Returns the source of the action.
+    pub fn src(&self) -> &P {
+        match *self {
+            NightAction::Heal(ref src, _) => src,
+            NightAction::Investigate(ref src, _) => src,
+            NightAction::Kill(ref src, _) => src
+        }
+    }
 }
 
 /// Contains the information sent to a player as the result of a night action.

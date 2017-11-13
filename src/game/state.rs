@@ -437,7 +437,7 @@ impl<P: Eq + Hash> Night<P> {
                 NightAction::Heal(ref src, ref tgt) => {
                     let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
                     let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
-                    //TODO check src alive, tgt alive
+                    //TODO check src in game, tgt in game, src alive, tgt alive, duplicate action
                     if self.last_heals[src_idx] != Some(tgt_idx) {
                         result.push(NightAction::Heal(src_idx, tgt_idx));
                     }
@@ -445,13 +445,13 @@ impl<P: Eq + Hash> Night<P> {
                 NightAction::Investigate(ref src, ref tgt) => {
                     let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
                     let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
-                    //TODO check src alive
+                    //TODO check src in game, tgt in game, src alive, duplicate action
                     result.push(NightAction::Investigate(src_idx, tgt_idx));
                 }
                 NightAction::Kill(ref src, ref tgt) => {
                     let src_idx = self.secret_ids.iter().position(|iter_player| src == iter_player).expect("action source is not in this game");
                     let tgt_idx = self.secret_ids.iter().position(|iter_player| tgt == iter_player).expect("action target is not in this game");
-                    //TODO check src alive, tgt alive
+                    //TODO check src in game, tgt in game, src alive, tgt alive, duplicate action
                     result.push(NightAction::Kill(src_idx, tgt_idx));
                 }
             }
