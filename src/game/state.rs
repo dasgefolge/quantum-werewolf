@@ -6,7 +6,7 @@ use std::hash::Hash;
 
 use rand::{Rng, thread_rng};
 
-use game::{Multiverse, NightAction, NightActionResult, Role};
+use game::{Faction, Multiverse, NightAction, NightActionResult, Role};
 use util::QwwIteratorExt;
 
 /// The minimum number of players required to start a game.
@@ -484,7 +484,7 @@ impl<P: Eq + Hash> From<Night<P>> for State<P> {
 #[derive(Debug)]
 pub struct Day<P: Eq + Hash> {
     secret_ids: Vec<P>,
-    pub(crate) multiverse: Multiverse,
+    multiverse: Multiverse,
     night_action_results: Vec<Option<NightActionResult>>,
     last_heals: Vec<Option<usize>>
 }
@@ -554,6 +554,13 @@ impl<P: Eq + Hash> Day<P> {
             multiverse: self.multiverse,
             last_heals: self.last_heals
         })
+    }
+
+    /// Produces the anonymized probability table shown to players at the start of the day.
+    ///
+    /// For each player in `secret_id` order, returns that player's probability of being town, of being a werewolf, and of being dead, if that player can still be alive. Otherwise, returns that player's faction.
+    pub fn probability_table(&self) -> Vec<Result<(f64, f64, f64), Faction>> {
+        self.multiverse.probability_table()
     }
 
     /// Returns the player list, sorted by secret player ID.

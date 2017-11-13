@@ -63,7 +63,7 @@ pub fn run_with_roles<P: Eq + Hash + Clone + Player + fmt::Display + From<String
                     }
                 }
                 // announce probability table
-                for (player_idx, probabilities) in day.multiverse.probability_table().into_iter().enumerate() {
+                for (player_idx, probabilities) in day.probability_table().into_iter().enumerate() {
                     match probabilities {
                         Ok((village_ratio, werewolves_ratio, dead_ratio)) => {
                             println!("[ ** ] {}: {}% village, {}% werewolf, {}% dead", player_idx, (village_ratio * 100.0).round() as u8, (werewolves_ratio * 100.0).round() as u8, (dead_ratio * 100.0).round() as u8);
