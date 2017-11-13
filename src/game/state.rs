@@ -127,7 +127,7 @@ impl<P: Eq + Hash> Signups<P> {
 
     /// Removes a player from the signups.
     ///
-    /// Returns `true` if the player was signed up.
+    /// Returns `true` if the player was previously signed up.
     pub fn remove_player(&mut self, player_id: &P) -> bool {
         self.player_names.remove(player_id)
     }
