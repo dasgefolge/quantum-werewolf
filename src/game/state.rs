@@ -125,6 +125,13 @@ impl<P: Eq + Hash> Signups<P> {
         self.player_names.len()
     }
 
+    /// Removes a player from the signups.
+    ///
+    /// Returns `true` if the player was signed up.
+    pub fn remove_player(&mut self, player_id: &P) -> bool {
+        self.player_names.remove(player_id)
+    }
+
     /// Start the game.
     ///
     /// If fewer roles than players are given, a number of Villagers equal to the difference will be added.
