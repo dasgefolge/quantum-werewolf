@@ -38,7 +38,7 @@ impl<P: Eq + Hash> State<P> {
         }
     }
 
-    /// Returns the number of players that are in this game
+    /// Returns the number of players that are in this game.
     ///
     /// For `Signups`, this is the number of players that have been signed up so far. For `Complete`, it's the number of winners.
     pub fn num_players(&self) -> usize {
@@ -451,7 +451,9 @@ impl<P: Eq + Hash> Night<P> {
                 NightAction::Heal(ref src, ref tgt) => {
                     let src_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| src == iter_player) { idx } else { continue; };
                     let tgt_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| tgt == iter_player) { idx } else { continue; };
-                    //TODO check src alive, tgt alive, duplicate action
+                    let alive = self.alive();
+                    if !alive.contains(&src) || !alive.contains(&tgt) { continue; }
+                    if result.iter().any(|action| if let NightAction::Heal(ref iter_src, _) = *action { *iter_src == src_idx } else { false }) { continue; }
                     if self.last_heals[src_idx] != Some(tgt_idx) {
                         result.push(NightAction::Heal(src_idx, tgt_idx));
                     }
@@ -459,13 +461,16 @@ impl<P: Eq + Hash> Night<P> {
                 NightAction::Investigate(ref src, ref tgt) => {
                     let src_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| src == iter_player) { idx } else { continue; };
                     let tgt_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| tgt == iter_player) { idx } else { continue; };
-                    //TODO check src alive, duplicate action
+                    if !self.alive().contains(&src) { continue; }
+                    if result.iter().any(|action| if let NightAction::Investigate(ref iter_src, _) = *action { *iter_src == src_idx } else { false }) { continue; }
                     result.push(NightAction::Investigate(src_idx, tgt_idx));
                 }
                 NightAction::Kill(ref src, ref tgt) => {
                     let src_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| src == iter_player) { idx } else { continue; };
                     let tgt_idx = if let Some(idx) = self.secret_ids.iter().position(|iter_player| tgt == iter_player) { idx } else { continue; };
-                    //TODO check src alive, tgt alive, duplicate action
+                    let alive = self.alive();
+                    if !alive.contains(&src) || !alive.contains(&tgt) { continue; }
+                    if result.iter().any(|action| if let NightAction::Kill(ref iter_src, _) = *action { *iter_src == src_idx } else { false }) { continue; }
                     result.push(NightAction::Kill(src_idx, tgt_idx));
                 }
             }
