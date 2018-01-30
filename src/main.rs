@@ -11,6 +11,7 @@ use std::string::ToString;
 
 use quantum_werewolf::game::{self, Role};
 use quantum_werewolf::game::state::Signups;
+use quantum_werewolf::handler::CliHandler;
 use quantum_werewolf::player::CliPlayer;
 
 struct Args {
@@ -103,9 +104,9 @@ fn main() {
         }
     }
     let winners = if let Some(roles) = args.roles {
-        game::run_with_roles(game_state, roles)
+        game::run_with_roles(CliHandler, game_state, roles)
     } else {
-        game::run(game_state)
+        game::run(CliHandler, game_state)
     }.expect("failed to start game");
     println!("[ ** ] The winners are: {}", join(winners));
 }
