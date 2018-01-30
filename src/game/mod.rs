@@ -3,7 +3,6 @@
 pub mod state;
 mod types;
 
-use std::fmt;
 use std::collections::HashSet;
 use std::hash::Hash;
 
@@ -16,7 +15,7 @@ pub use self::types::*;
 /// The number of werewolves will be the 0.4 times the number of players, rounded down. There will also be one detective.
 ///
 /// Returns the winners of the game.
-pub fn run<P: Eq + Hash + Clone + Player + fmt::Display + From<String>, H: Handler<P>>(handler: H, game_state: state::Signups<P>) -> Result<HashSet<P>, state::StartGameError> {
+pub fn run<P: Eq + Hash + Clone + Player, H: Handler<P>>(handler: H, game_state: state::Signups<P>) -> Result<HashSet<P>, state::StartGameError> {
     let num_ww = game_state.num_players() * 2 / 5;
     let mut roles = (0..num_ww).map(|i| Role::Werewolf(i)).collect::<Vec<_>>();
     roles.push(Role::Detective);
@@ -28,7 +27,7 @@ pub fn run<P: Eq + Hash + Clone + Player + fmt::Display + From<String>, H: Handl
 /// If fewer roles than players are given, a number of Villagers equal to the difference will be added.
 ///
 /// Returns the winners of the game.
-pub fn run_with_roles<P: Eq + Hash + Clone + Player + fmt::Display + From<String>, H: Handler<P>>(mut handler: H, game_state: state::Signups<P>, roles: Vec<Role>) -> Result<HashSet<P>, state::StartGameError> {
+pub fn run_with_roles<P: Eq + Hash + Clone + Player, H: Handler<P>>(mut handler: H, game_state: state::Signups<P>, roles: Vec<Role>) -> Result<HashSet<P>, state::StartGameError> {
     let mut game_state = game_state.start(roles)?;
     let mut alive = game_state.alive().expect("failed to get list of living players").into_iter().cloned().collect::<HashSet<_>>();
     // assign secret player IDs
