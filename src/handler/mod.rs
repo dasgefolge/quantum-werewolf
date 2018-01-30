@@ -2,6 +2,8 @@
 
 mod cli;
 
+use std::collections::HashSet;
+
 use game::{Faction, Role};
 use player::Player;
 pub use self::cli::CliHandler;
@@ -26,5 +28,5 @@ pub trait Handler<P: Player> {
     /// Implementations should run the town discussion, implementing any appropriate discussion system, and return the lynched player.
     ///
     /// Returning `None` stands for a no-lynch decision.
-    fn choose_lynch_target(&mut self) -> Option<P>;
+    fn choose_lynch_target(&mut self, _: HashSet<&P>) -> Option<P>;
 }

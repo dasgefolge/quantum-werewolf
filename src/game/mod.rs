@@ -63,7 +63,7 @@ pub fn run_with_roles<P: Eq + Hash + Clone + Player + fmt::Display + From<String
                 handler.announce_probability_table(day.probability_table());
                 // vote
                 loop {
-                    if let Some(target) = handler.choose_lynch_target() {
+                    if let Some(target) = handler.choose_lynch_target(day.alive()) {
                         if day.can_lynch(&target) {
                             break day.lynch(target);
                         }

@@ -1,4 +1,5 @@
 use std::fmt;
+use std::collections::HashSet;
 
 use util;
 use game::{Faction, Role};
@@ -32,7 +33,7 @@ impl<P: Player + From<String> + fmt::Display> Handler<P> for CliHandler {
         println!("[ !! ] no such player to lynch");
     }
 
-    fn choose_lynch_target(&mut self) -> Option<P> {
+    fn choose_lynch_target(&mut self, _: HashSet<&P>) -> Option<P> {
         let name = util::input("town lynch target");
         if name == "no lynch" {
             None
