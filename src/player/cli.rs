@@ -34,10 +34,6 @@ impl From<String> for CliPlayer {
 }
 
 impl Player for CliPlayer {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
     fn recv_id(&self, player_id: usize) {
         self.print_secret(&format!("your secret player ID is {}", player_id)[..]);
     }

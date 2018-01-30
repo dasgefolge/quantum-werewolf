@@ -9,9 +9,6 @@ pub use self::cli::CliPlayer;
 
 /// The game uses this trait to talk to players. Implementing types perform all game actions.
 pub trait Player: fmt::Debug + ::std::marker::Sized {
-    /// Returns the name of the player. Must stay the same throughout a game.
-    fn name(&self) -> &str;
-
     /// Notifies the player that they have received a secret player ID.
     fn recv_id(&self, usize);
 
