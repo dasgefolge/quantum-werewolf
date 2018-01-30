@@ -120,6 +120,11 @@ impl<P: Eq + Hash> Signups<P> {
         self.player_names.insert(player_id)
     }
 
+    /// Returns `true` if the given player is already signed up.
+    pub fn is_signed_up(&self, player_id: &P) -> bool {
+        self.player_names.contains(player_id)
+    }
+
     /// Returns the number of players that have been signed up so far.
     pub fn num_players(&self) -> usize {
         self.player_names.len()
