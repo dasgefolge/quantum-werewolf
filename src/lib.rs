@@ -12,4 +12,5 @@ pub mod handler;
 pub mod player;
 mod util;
 
+pub use handler::Handler;
 pub use player::Player;
