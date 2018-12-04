@@ -1,4 +1,4 @@
-This is a [Rust](https://www.rust-lang.org/) implementation of [**Quantum Werewolf**](http://puzzle.cisra.com.au/2008/quantumwerewolf.html), a variant of [Werewolf](https://en.wikipedia.org/wiki/Mafia_%28party_game%29) based on [quantum mechanics](https://en.wikipedia.org/wiki/Quantum_mechanics). It can be used as a standalone program, or as a Rust library.
+This is a [Rust](https://www.rust-lang.org/) implementation of [**Quantum Werewolf**](https://web.archive.org/web/20181116123708/https://puzzle.cisra.com.au/2008/quantumwerewolf.html), a variant of [Werewolf](https://en.wikipedia.org/wiki/Mafia_%28party_game%29) based on [quantum mechanics](https://en.wikipedia.org/wiki/Quantum_mechanics). It can be used as a standalone program, or as a Rust library.
 
 # Usage
 
