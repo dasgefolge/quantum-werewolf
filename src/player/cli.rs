@@ -1,9 +1,15 @@
-use std::fmt;
-use std::io::prelude::*;
-use std::io::{stdin, stdout};
-
-use game::Faction;
-use player::Player;
+use std::{
+    fmt,
+    io::{
+        prelude::*,
+        stdin,
+        stdout
+    }
+};
+use crate::{
+    game::Faction,
+    player::Player
+};
 
 /// A player who sends game actions via the command line.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

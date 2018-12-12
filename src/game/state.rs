@@ -1,13 +1,25 @@
 //! Game state representation.
 
-use std::fmt;
-use std::collections::HashSet;
-use std::hash::Hash;
-
-use rand::{Rng, thread_rng};
-
-use game::{Faction, Multiverse, NightAction, NightActionResult, Role};
-use util::QwwIteratorExt;
+use std::{
+    collections::HashSet,
+    fmt,
+    hash::Hash
+};
+use rand::prelude::*;
+use serde_derive::{
+    Deserialize,
+    Serialize
+};
+use crate::{
+    game::{
+        Faction,
+        Multiverse,
+        NightAction,
+        NightActionResult,
+        Role
+    },
+    util::QwwIteratorExt
+};
 
 /// The minimum number of players required to start a game.
 pub const MIN_PLAYERS: usize = 3;
@@ -15,7 +27,7 @@ pub const MIN_PLAYERS: usize = 3;
 /// This enum represents the state of the game. Each variant contains relevant methods to observe or progress the game state, refer to their documentation for details.
 ///
 /// The type parameter `P` is used for player identifiers.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum State<P: Eq + Hash> {
     /// A game which has not been started. The moderator may sign up players, or start the game.
     Signups(Signups<P>),
@@ -78,7 +90,7 @@ impl<P: Eq + Hash> Default for State<P> {
 }
 
 /// A game which has not been started. The moderator may sign up players, or start the game.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Signups<P: Eq + Hash> {
     player_names: HashSet<P>
 }
@@ -150,7 +162,7 @@ impl<P: Eq + Hash> Signups<P> {
         }
         let Signups { player_names } = self;
         let mut secret_ids = player_names.into_iter().collect::<Vec<_>>();
-        thread_rng().shuffle(&mut secret_ids);
+        secret_ids.shuffle(&mut thread_rng());
         let roles = roles.into_iter()
             .filter(|&role| role != Role::Villager)
             .fold((0, Vec::default()), |(mut num_ww, mut roles), role| {
@@ -189,7 +201,7 @@ impl<P: Eq + Hash> From<Signups<P>> for State<P> {
 }
 
 /// A running game which is currently in night time, waiting for the players' night actions.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Night<P: Eq + Hash> {
     secret_ids: Vec<P>,
     last_heals: Vec<Option<usize>>,
@@ -348,7 +360,7 @@ impl<P: Eq + Hash> Night<P> {
                         .map(|iter_id| &ids[iter_id])
                         .collect::<Vec<_>>()
                 };
-                thread_rng().shuffle(&mut healable);
+                healable.shuffle(&mut thread_rng());
                 if let Some(target) = choose_heal_target(player, healable) {
                     let target_id = self.secret_ids.iter().position(|iter_player| &target == iter_player).expect("healed player not in game");
                     current_heals[player_id] = Some(target_id);
@@ -402,7 +414,7 @@ impl<P: Eq + Hash> Night<P> {
                     .map(|iter_id| &ids[iter_id])
                     .collect::<Vec<_>>()
             };
-            thread_rng().shuffle(&mut alive);
+            alive.shuffle(&mut thread_rng());
             for (player_id, player) in shuffled_players(&self.secret_ids) {
                 if !self.multiverse.alive().contains(&player_id) { continue; }
                 let target = choose_werewolf_kill_target(player, alive.clone());
@@ -505,7 +517,7 @@ impl<P: Eq + Hash> From<Night<P>> for State<P> {
 }
 
 /// A running game which is currently in day time, waiting for the result of the lynch vote.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Day<P: Eq + Hash> {
     secret_ids: Vec<P>,
     multiverse: Multiverse,
@@ -600,7 +612,7 @@ impl<P: Eq + Hash> From<Day<P>> for State<P> {
 }
 
 /// A completed game.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Complete<P: Eq + Hash> {
     /// The set of players who have won this game.
     pub winners: HashSet<P>
@@ -631,6 +643,6 @@ impl<P: Eq + Hash> From<Complete<P>> for State<P> {
 /// Iterate over all players in a random order.
 fn shuffled_players<P>(secret_ids: &[P]) -> Vec<(usize, &P)> {
     let mut result = secret_ids.iter().enumerate().collect::<Vec<_>>();
-    thread_rng().shuffle(&mut result);
+    result.shuffle(&mut thread_rng());
     result
 }

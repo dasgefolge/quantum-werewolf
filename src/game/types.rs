@@ -1,15 +1,23 @@
 //! Data types used in game state representation.
 
-use std::{fmt, iter, mem, slice, vec};
-use std::collections::HashMap;
-use std::str::FromStr;
-
+use std::{
+    collections::HashMap,
+    fmt,
+    iter,
+    mem,
+    slice,
+    str::FromStr,
+    vec
+};
 use rand::thread_rng;
-
-use util::QwwIteratorExt;
+use serde_derive::{
+    Deserialize,
+    Serialize
+};
+use crate::util::QwwIteratorExt;
 
 /// The faction (also called party) of a player determines their goal. It is usually derived from the role.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Faction {
     /// The player wants to eliminate the village.
     Werewolves,
@@ -70,14 +78,14 @@ impl<P> NightAction<P> {
 }
 
 /// Contains the information sent to a player as the result of a night action.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum NightActionResult {
     /// An investigation result, for example for a detective.
     Investigation(Faction)
 }
 
 /// A Werewolf player role.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Role {
     /// A detective, part of the village. Investigates a player each night, learning their faction.
     Detective,
@@ -124,7 +132,7 @@ impl fmt::Display for Role {
 }
 
 /// A universe represents one of the possible quantum states in a game of Quantum Werewolf. It contains information such as the distribution of roles, and which players are still alive.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Universe {
     pub(crate) alive: Vec<bool>,
     pub(crate) roles: Vec<Role>,
@@ -172,7 +180,7 @@ impl From<Vec<Role>> for Universe {
 }
 
 /// A collection of universes, with several convenience methods.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Multiverse(Vec<Universe>);
 
 impl Multiverse {

@@ -3,11 +3,14 @@
 pub mod state;
 mod types;
 
-use std::collections::HashSet;
-use std::hash::Hash;
-
-use handler::Handler;
-use player::Player;
+use std::{
+    collections::HashSet,
+    hash::Hash
+};
+use crate::{
+    handler::Handler,
+    player::Player
+};
 pub use self::types::*;
 
 /// Generate a basic role distribution for the signed-up players, and moderate a game of Quantum Werewolf.

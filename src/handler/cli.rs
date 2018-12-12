@@ -1,10 +1,15 @@
 use std::fmt;
 use std::collections::HashSet;
 
-use util;
-use game::{Faction, Role};
-use handler::Handler;
-use player::Player;
+use crate::{
+    game::{
+        Faction,
+        Role
+    },
+    handler::Handler,
+    player::Player,
+    util,
+};
 
 /// A game handler which uses the command line.
 pub struct CliHandler;

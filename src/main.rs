@@ -1,18 +1,25 @@
 #![warn(trivial_casts)]
 #![forbid(unused, unused_extern_crates, unused_import_braces)]
 
-extern crate quantum_werewolf;
-
-use std::env;
-use std::io::prelude::*;
-use std::io::{stdin, stdout};
-use std::str::FromStr;
-use std::string::ToString;
-
-use quantum_werewolf::game::{self, Role};
-use quantum_werewolf::game::state::Signups;
-use quantum_werewolf::handler::CliHandler;
-use quantum_werewolf::player::CliPlayer;
+use std::{
+    env,
+    io::{
+        prelude::*,
+        stdin,
+        stdout
+    },
+    str::FromStr,
+    string::ToString
+};
+use quantum_werewolf::{
+    game::{
+        self,
+        Role,
+        state::Signups
+    },
+    handler::CliHandler,
+    player::CliPlayer
+};
 
 struct Args {
     roles: Option<Vec<Role>>

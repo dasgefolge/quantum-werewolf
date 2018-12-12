@@ -2,15 +2,15 @@
 
 #![cfg_attr(test, deny(warnings))]
 #![warn(trivial_casts)]
-#![deny(missing_docs, unused)]
-#![forbid(unused_extern_crates, unused_import_braces)]
-
-extern crate rand;
+#![deny(missing_docs, unused, unused_qualifications)]
+#![forbid(unused_import_braces)]
 
 pub mod game;
 pub mod handler;
 pub mod player;
 mod util;
 
-pub use handler::Handler;
-pub use player::Player;
+pub use self::{
+    handler::Handler,
+    player::Player
+};

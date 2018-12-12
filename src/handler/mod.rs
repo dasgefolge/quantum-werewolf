@@ -3,9 +3,13 @@
 mod cli;
 
 use std::collections::HashSet;
-
-use game::{Faction, Role};
-use player::Player;
+use crate::{
+    game::{
+        Faction,
+        Role
+    },
+    player::Player
+};
 pub use self::cli::CliHandler;
 
 /// The game uses this trait to broadcast public game messages.

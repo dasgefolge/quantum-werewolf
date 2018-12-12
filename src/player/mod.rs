@@ -3,14 +3,13 @@
 mod cli;
 
 use std::fmt;
-
-pub use game::Faction;
+use crate::game::Faction;
 pub use self::cli::CliPlayer;
 
 /// The game uses this trait to talk to players. Implementing types perform all game actions.
 pub trait Player: fmt::Debug + ::std::marker::Sized {
     /// Notifies the player that they have received a secret player ID.
-    fn recv_id(&self, usize);
+    fn recv_id(&self, player_id: usize);
 
     /// Called when the player should heal a player. Should return the name of the player to heal.
     ///
@@ -23,7 +22,7 @@ pub trait Player: fmt::Debug + ::std::marker::Sized {
     fn choose_investigation_target(&self, possible_targets: Vec<&Self>) -> Option<Self>;
 
     /// Notifies the player of the result of an investigation.
-    fn recv_investigation(&self, Faction);
+    fn recv_investigation(&self, faction: Faction);
 
     /// Called when the player should kill another player as the dominant werewolf. Should return the name of the attacked player.
     ///
