@@ -285,7 +285,7 @@ impl<P: Eq + Hash> Night<P> {
                         continue;
                     };
                     if night_action_results[src_idx].is_some() { unimplemented!("multiple night action results for one player"); }
-                    night_action_results[src_idx] = Some(NightActionResult::Investigation(investigated_faction));
+                    night_action_results[src_idx] = Some(NightActionResult::Investigation(tgt_idx, investigated_faction));
                     self.multiverse = self.multiverse.into_iter()
                         .filter(|universe| !(
                             universe.roles[src_idx] == Role::Detective &&
@@ -395,7 +395,7 @@ impl<P: Eq + Hash> Night<P> {
                         continue;
                     };
                     if night_action_results[player_id].is_some() { unimplemented!("multiple night action results for one player"); }
-                    night_action_results[player_id] = Some(NightActionResult::Investigation(investigated_faction));
+                    night_action_results[player_id] = Some(NightActionResult::Investigation(target_id, investigated_faction));
                     self.multiverse = self.multiverse.into_iter()
                         .filter(|universe| !(
                             universe.roles[player_id] == Role::Detective &&
@@ -521,7 +521,7 @@ impl<P: Eq + Hash> From<Night<P>> for State<P> {
 pub struct Day<P: Eq + Hash> {
     secret_ids: Vec<P>,
     multiverse: Multiverse,
-    night_action_results: Vec<Option<NightActionResult>>,
+    night_action_results: Vec<Option<NightActionResult<usize>>>,
     last_heals: Vec<Option<usize>>
 }
 
@@ -534,11 +534,11 @@ impl<P: Eq + Hash> Day<P> {
     }
 
     /// Contains results of the last night's night actions.
-    pub fn night_action_results(&self) -> Vec<(&P, NightActionResult)> {
+    pub fn night_action_results(&self) -> Vec<(&P, NightActionResult<&P>)> {
         let mut list = Vec::default();
         for (player_idx, result) in self.night_action_results.iter().enumerate() {
             if let &Some(result) = result {
-                list.push((&self.secret_ids[player_idx], result));
+                list.push((&self.secret_ids[player_idx], result.index(&self.secret_ids)));
             }
         }
         list

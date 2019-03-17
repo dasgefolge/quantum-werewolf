@@ -58,7 +58,7 @@ pub fn run_with_roles<P: Eq + Hash + Clone + Player, H: Handler<P>>(mut handler:
                 // send night action results
                 for (player, result) in day.night_action_results() {
                     match result {
-                        NightActionResult::Investigation(faction) => { player.recv_investigation(faction); }
+                        NightActionResult::Investigation(target, faction) => { player.recv_investigation(target, faction); }
                     }
                 }
                 // announce probability table

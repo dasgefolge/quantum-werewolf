@@ -68,8 +68,8 @@ impl Player for CliPlayer {
         }
     }
 
-    fn recv_investigation(&self, faction: Faction) {
-        self.print_secret(&format!("investigation result: {}", faction)[..]);
+    fn recv_investigation(&self, target: &CliPlayer, faction: Faction) {
+        self.print_secret(&format!("investigation result: {}'s faction is {}", target, faction)[..]);
     }
 
     fn choose_werewolf_kill_target(&self, possible_targets: Vec<&CliPlayer>) -> CliPlayer {

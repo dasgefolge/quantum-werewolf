@@ -22,7 +22,7 @@ pub trait Player: fmt::Debug + ::std::marker::Sized {
     fn choose_investigation_target(&self, possible_targets: Vec<&Self>) -> Option<Self>;
 
     /// Notifies the player of the result of an investigation.
-    fn recv_investigation(&self, faction: Faction);
+    fn recv_investigation(&self, target: &Self, faction: Faction);
 
     /// Called when the player should kill another player as the dominant werewolf. Should return the name of the attacked player.
     ///

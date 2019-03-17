@@ -79,9 +79,19 @@ impl<P> NightAction<P> {
 
 /// Contains the information sent to a player as the result of a night action.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-pub enum NightActionResult {
+pub enum NightActionResult<P> {
     /// An investigation result, for example for a detective.
-    Investigation(Faction)
+    Investigation(P, Faction)
+}
+
+impl NightActionResult<usize> {
+    pub(crate) fn index<P>(self, ids: &[P]) -> NightActionResult<&P> {
+        use NightActionResult::*;
+
+        match self {
+            Investigation(idx, faction) => Investigation(&ids[idx], faction)
+        }
+    }
 }
 
 /// A Werewolf player role.
