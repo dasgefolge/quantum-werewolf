@@ -1,4 +1,4 @@
-//! This is a Rust implementation of [Quantum Werewolf](http://puzzle.cisra.com.au/2008/quantumwerewolf.html).
+//! This is a Rust implementation of [Quantum Werewolf](https://web.archive.org/web/20181116123708/https://puzzle.cisra.com.au/2008/quantumwerewolf.html).
 
 #![cfg_attr(test, deny(warnings))]
 #![warn(trivial_casts)]
