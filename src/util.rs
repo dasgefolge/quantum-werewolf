@@ -1,7 +1,11 @@
-use std::io::prelude::*;
-use std::io::{stdin, stdout};
-
-use rand::Rng;
+use {
+    std::io::{
+        prelude::*,
+        stdin,
+        stdout,
+    },
+    rand::Rng,
+};
 
 pub trait QwwIteratorExt: Iterator + Sized {
     fn rand<R: Rng>(self, rng: &mut R) -> Option<Self::Item> {
@@ -10,7 +14,7 @@ pub trait QwwIteratorExt: Iterator + Sized {
             None
         } else {
             let len = v.len();
-            Some(v.swap_remove(rng.gen_range(0, len)))
+            Some(v.swap_remove(rng.gen_range(0..len)))
         }
     }
 }
