@@ -22,3 +22,4 @@ bench = false
 [dependencies]
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
+thiserror = "1"

@@ -3,7 +3,6 @@
 use {
     std::{
         collections::HashSet,
-        fmt,
         hash::Hash,
     },
     rand::prelude::*,
@@ -98,32 +97,24 @@ pub struct Signups<P: Eq + Hash> {
 }
 
 /// The possible errors returned by `Signups::start`.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum StartGameError {
     /// There are less than the required number of players.
+    #[error("failed to start game: not enough players ({required} required, {found} signed up)")]
     NotEnoughPlayers {
         /// This many players are required to start a game.
         required: usize,
         /// But only this many have signed up.
-        found: usize
+        found: usize,
     },
     /// More roles than there are players have been specified.
+    #[error("failed to start game: too many roles ({required} players, {found} roles)")]
     RolesCount {
         /// This many players have signed up.
         required: usize,
         /// But this many roles have been given.
-        found: usize
-    }
-}
-
-impl fmt::Display for StartGameError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "failed to start game: ")?;
-        match *self {
-            StartGameError::NotEnoughPlayers { required, found } => write!(f, "not enough players ({} required, {} signed up)", required, found),
-            StartGameError::RolesCount { required, found } => write!(f, "too many roles ({} players, {} roles)", required, found),
-        }
-    }
+        found: usize,
+    },
 }
 
 impl<P: Eq + Hash> Signups<P> {
