@@ -1,24 +1,26 @@
 //! Game state representation.
 
-use std::{
-    collections::HashSet,
-    fmt,
-    hash::Hash
-};
-use rand::prelude::*;
-use serde_derive::{
-    Deserialize,
-    Serialize
-};
-use crate::{
-    game::{
-        Faction,
-        Multiverse,
-        NightAction,
-        NightActionResult,
-        Role
+use {
+    std::{
+        collections::HashSet,
+        fmt,
+        hash::Hash,
     },
-    util::QwwIteratorExt
+    rand::prelude::*,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    crate::{
+        game::{
+            Faction,
+            Multiverse,
+            NightAction,
+            NightActionResult,
+            Role,
+        },
+        util::QwwIteratorExt as _,
+    },
 };
 
 /// The minimum number of players required to start a game.

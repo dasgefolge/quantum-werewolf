@@ -1,20 +1,21 @@
 //! Data types used in game state representation.
 
-use std::{
-    collections::HashMap,
-    fmt,
-    iter,
-    mem,
-    slice,
-    str::FromStr,
-    vec
+use {
+    std::{
+        collections::HashMap,
+        fmt,
+        mem,
+        slice,
+        str::FromStr,
+        vec,
+    },
+    rand::thread_rng,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    crate::util::QwwIteratorExt as _,
 };
-use rand::thread_rng;
-use serde_derive::{
-    Deserialize,
-    Serialize
-};
-use crate::util::QwwIteratorExt;
 
 /// The faction (also called party) of a player determines their goal. It is usually derived from the role.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
@@ -22,7 +23,7 @@ pub enum Faction {
     /// The player wants to eliminate the village.
     Werewolves,
     /// The player wants to eliminate all threats to the village.
-    Village
+    Village,
 }
 
 impl Faction {
@@ -50,7 +51,7 @@ impl fmt::Display for Faction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Faction::Werewolves => write!(f, "werewolves"),
-            Faction::Village => write!(f, "village")
+            Faction::Village => write!(f, "village"),
         }
     }
 }
@@ -63,7 +64,7 @@ pub enum NightAction<P> {
     /// A detective investigation.
     Investigate(P, P),
     /// A werewolf kill.
-    Kill(P, P)
+    Kill(P, P),
 }
 
 impl<P> NightAction<P> {
@@ -72,7 +73,7 @@ impl<P> NightAction<P> {
         match *self {
             NightAction::Heal(ref src, _) => src,
             NightAction::Investigate(ref src, _) => src,
-            NightAction::Kill(ref src, _) => src
+            NightAction::Kill(ref src, _) => src,
         }
     }
 }
@@ -81,7 +82,7 @@ impl<P> NightAction<P> {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum NightActionResult<P> {
     /// An investigation result, for example for a detective.
-    Investigation(P, Faction)
+    Investigation(P, Faction),
 }
 
 impl NightActionResult<usize> {
@@ -89,7 +90,7 @@ impl NightActionResult<usize> {
         use NightActionResult::*;
 
         match self {
-            Investigation(idx, faction) => Investigation(&ids[idx], faction)
+            Investigation(idx, faction) => Investigation(&ids[idx], faction),
         }
     }
 }
@@ -104,14 +105,14 @@ pub enum Role {
     /// A regular villager with no special abilities.
     Villager,
     /// A werewolf. Kills a player each night if no werewolf with a *lower* rank is alive.
-    Werewolf(usize)
+    Werewolf(usize),
 }
 
 impl Role {
     fn default_faction(&self) -> Faction {
         match *self {
             Role::Detective | Role::Healer | Role::Villager => Faction::Village,
-            Role::Werewolf(_) => Faction::Werewolves
+            Role::Werewolf(_) => Faction::Werewolves,
         }
     }
 }
@@ -125,7 +126,7 @@ impl FromStr for Role {
             "healer" => Ok(Role::Healer),
             "villager" => Ok(Role::Villager),
             "werewolf" => Ok(Role::Werewolf(0)),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -136,7 +137,7 @@ impl fmt::Display for Role {
             Role::Detective => write!(f, "detective"),
             Role::Healer => write!(f, "healer"),
             Role::Villager => write!(f, "villager"),
-            Role::Werewolf(i) => write!(f, "werewolf {}", i)
+            Role::Werewolf(i) => write!(f, "werewolf {i}"),
         }
     }
 }
@@ -148,7 +149,7 @@ pub struct Universe {
     pub(crate) roles: Vec<Role>,
     pub(crate) factions: Vec<Faction>,
     pub(crate) heals: Vec<usize>, // this should be a set, but HashSet isn't hashable
-    pub(crate) kills: Vec<usize> // this should be a set, but HashSet isn't hashable
+    pub(crate) kills: Vec<usize>, // this should be a set, but HashSet isn't hashable
 }
 
 impl Universe {
@@ -184,7 +185,7 @@ impl From<Vec<Role>> for Universe {
             factions: roles.iter().map(Role::default_faction).collect(),
             roles: roles,
             heals: Vec::default(),
-            kills: Vec::default()
+            kills: Vec::default(),
         }
     }
 }
@@ -331,8 +332,8 @@ impl Multiverse {
     }
 }
 
-impl iter::FromIterator<Universe> for Multiverse {
-    fn from_iter<I: IntoIterator<Item=Universe>>(iter: I) -> Multiverse {
+impl FromIterator<Universe> for Multiverse {
+    fn from_iter<I: IntoIterator<Item = Universe>>(iter: I) -> Multiverse {
         Multiverse(iter.into_iter().collect())
     }
 }

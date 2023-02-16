@@ -2,7 +2,7 @@
 name = "quantum-werewolf"
 version = "0.2.0"
 authors = ["Fenhl <fenhl@fenhl.net>"]
-edition = "2018"
+edition = "2021"
 
 [profile.release]
 lto = true
@@ -21,5 +21,4 @@ bench = false
 
 [dependencies]
 rand = "0.8"
-serde = "1"
-serde_derive = "1"
+serde = { version = "1", features = ["derive"] }
