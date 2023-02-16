@@ -48,7 +48,7 @@ impl Faction {
 }
 
 impl fmt::Display for Faction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Faction::Werewolves => write!(f, "werewolves"),
             Faction::Village => write!(f, "village"),
@@ -132,7 +132,7 @@ impl FromStr for Role {
 }
 
 impl fmt::Display for Role {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Role::Detective => write!(f, "detective"),
             Role::Healer => write!(f, "healer"),
@@ -270,12 +270,12 @@ impl Multiverse {
     }
 
     /// Iterates over all universes in no particular order.
-    pub fn iter(&self) -> slice::Iter<Universe> {
+    pub fn iter(&self) -> slice::Iter<'_, Universe> {
         self.0.iter()
     }
 
     /// Iterates over all universes in no particular order.
-    pub fn iter_mut(&mut self) -> slice::IterMut<Universe> {
+    pub fn iter_mut(&mut self) -> slice::IterMut<'_, Universe> {
         self.0.iter_mut()
     }
 

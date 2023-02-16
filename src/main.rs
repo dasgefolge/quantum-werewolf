@@ -1,5 +1,5 @@
-#![warn(trivial_casts)]
-#![forbid(unused, unused_extern_crates, unused_import_braces)]
+#![deny(rust_2018_idioms, unused, unused_import_braces, unused_lifetimes, unused_qualifications, warnings)]
+#![forbid(unsafe_code)]
 
 use std::{
     env,

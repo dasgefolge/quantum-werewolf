@@ -88,7 +88,7 @@ impl Player for CliPlayer {
 }
 
 impl fmt::Display for CliPlayer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
     }
 }
